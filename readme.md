@@ -119,3 +119,102 @@ _Logs feedback and adjusts user interests._
    git clone https://github.com/your-repo-url.git
    cd content-recommendation-microservice
    ```
+## **Deployment**
+   version: '3.8'
+
+services:
+  user-service:
+    build: ./user-service
+    ports:
+      - "8001:8000"
+    env_file:
+      - ./user-service/.env
+    depends_on:
+      - mongodb
+      - qdrant
+      - kafka
+      - redis
+    networks:
+      - microservices_network
+
+  feedback-service:
+    build: ./feedback-service
+    ports:
+      - "8002:8000"
+    env_file:
+      - ./feedback-service/.env
+    depends_on:
+      - mongodb
+      - kafka
+    networks:
+      - microservices_network
+
+  content-service:
+    build: ./content-service
+    ports:
+      - "8003:8000"
+    env_file:
+      - ./content-service/.env
+    depends_on:
+      - kafka
+    networks:
+      - microservices_network
+
+  # mongodb:
+  #   image: mongo:6.0
+  #   container_name: mongodb
+  #   restart: always
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongo_data:/data/db
+  #   networks:
+  #     - microservices_network
+
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant
+    restart: always
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    networks:
+      - microservices_network
+  
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - microservices_network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    restart: always
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - microservices_network
+
+  kafka:
+    image: confluentinc/cp-kafka
+    container_name: kafka
+    restart: always
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - microservices_network
