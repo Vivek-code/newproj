@@ -122,6 +122,13 @@ _Logs feedback and adjusts user interests._
 ## **Deployment**
    version: '3.8'
 
+## Docker Compose Configuration
+
+Below is the Docker Compose configuration for deploying the microservices:
+
+```yaml
+version: '3.8'
+
 services:
   user-service:
     build: ./user-service
@@ -218,3 +225,12 @@ services:
       - zookeeper
     networks:
       - microservices_network
+
+networks:
+  microservices_network:
+    driver: bridge
+
+volumes:
+  qdrant_storage:
+  mongo_data:
+
